@@ -15,9 +15,9 @@ type worker struct {
 
 func (w *worker) Run(ctx context.Context, wg *sync.WaitGroup) {
 	defer func() {
-		wg.Done()
-
 		log.Println(fmt.Sprintf("Terminated worker [%d]", w.id))
+
+		wg.Done()
 	}()
 
 	wg.Add(1)
@@ -26,11 +26,11 @@ func (w *worker) Run(ctx context.Context, wg *sync.WaitGroup) {
 
 	for {
 		select {
-		case <-ctx.Done():
-			return
-
 		case site := <-w.queue:
 			w.runCron(site)
+
+		case <-ctx.Done():
+			return
 		}
 	}
 }

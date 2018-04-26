@@ -15,12 +15,6 @@ type scheduler struct {
 }
 
 func (s *scheduler) Run(ctx context.Context, wg *sync.WaitGroup) {
-	defer func() {
-		wg.Done()
-
-		log.Println("Terminated scheduler")
-	}()
-
 	wg.Add(1)
 
 	log.Println("Started scheduler")
@@ -32,18 +26,25 @@ func (s *scheduler) Run(ctx context.Context, wg *sync.WaitGroup) {
 	requeueTimer := time.NewTicker(1 * time.Second) // small delay between adding jobs to the queue
 	refreshTimer := time.NewTicker(time.Minute)
 
+	defer func() {
+		log.Println("Terminated scheduler")
+
+		requeueTimer.Stop()
+		refreshTimer.Stop()
+
+		wg.Done()
+	}()
+
 	for {
 		select {
-		case <-ctx.Done():
-			requeueTimer.Stop()
-			refreshTimer.Stop()
-			return
-
 		case <-requeueTimer.C:
 			s.requeueSites()
 
 		case <-refreshTimer.C:
 			s.refreshSites()
+
+		case <-ctx.Done():
+			return
 		}
 	}
 }
