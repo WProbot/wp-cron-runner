@@ -25,6 +25,17 @@ func (w *worker) Run(ctx context.Context, wg *sync.WaitGroup) {
 	log.Println(fmt.Sprintf("Started worker [%d]", w.id))
 
 	for {
+
+		// Prioritise context done channel to avoid select statement choosing randomly
+		// between the queue and the context channel as below.
+		select {
+		case <-ctx.Done():
+			return
+
+		default:
+			// don't block, fall through, live happy life!
+		}
+
 		select {
 		case site := <-w.queue:
 			w.runCron(site)
