@@ -79,6 +79,15 @@ func parseArgs() error {
 	if maxWorkers <= 0 {
 		return errors.New("invalid argument \"workers\": must be greater than zero")
 	} else if runtime.NumCPU() == 1 && maxWorkers > 1 {
+
+		// Here we have a problem: WP CLI is a real CPU hog!
+		//
+		// Running this app on a single core with multiple workers does not have any benefits.
+		// More over it maxes out CPU and because we are running in a auto scaling group,
+		// it starts adding new servers.
+		//
+		// So, the solution is to limit the number of workers to 1 on a single CPU core.
+
 		maxWorkers = 1
 
 		log.Println("Single CPU detected and the number of workers is limited to 1")
