@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
-	"strings"
 	"sync"
 	"syscall"
 
@@ -28,31 +27,29 @@ var (
 func parseArgs() error {
 	var err error
 
-	if value, ok := os.LookupEnv("CRON_RUNNER_WP_PATH"); ok {
-		wpPath = strings.Trim(value, "\"' ")
+	if v, ok := os.LookupEnv("CRON_RUNNER_WP_PATH"); ok {
+		wpPath = v
 	}
 
-	if value, ok := os.LookupEnv("CRON_RUNNER_WP_CLI_PATH"); ok {
-		wpCliPath = strings.Trim(value, "\"' ")
+	if v, ok := os.LookupEnv("CRON_RUNNER_WP_CLI_PATH"); ok {
+		wpCliPath = v
 	}
 
-	if value, ok := os.LookupEnv("CRON_RUNNER_QUEUE_SIZE"); ok {
-		value = strings.Trim(value, "\"' ")
-		q, err := strconv.Atoi(value)
+	if v, ok := os.LookupEnv("CRON_RUNNER_QUEUE_SIZE"); ok {
+		q, err := strconv.Atoi(v)
 
 		if err != nil {
-			return fmt.Errorf("invalid value provided for \"CRON_RUNNER_QUEUE_SIZE\" variable: %s", err)
+			return fmt.Errorf("invalid value provided for CRON_RUNNER_QUEUE_SIZE environment variable: %s", err)
 		}
 
 		queueSize = q
 	}
 
-	if value, ok := os.LookupEnv("CRON_RUNNER_MAX_WORKERS"); ok {
-		value = strings.Trim(value, "\"' ")
-		q, err := strconv.Atoi(value)
+	if v, ok := os.LookupEnv("CRON_RUNNER_MAX_WORKERS"); ok {
+		q, err := strconv.Atoi(v)
 
 		if err != nil {
-			return fmt.Errorf("invalid value provided for \"CRON_RUNNER_MAX_WORKERS\" variable: %s", err)
+			return fmt.Errorf("invalid value provided for CRON_RUNNER_MAX_WORKERS environment variable: %s", err)
 		}
 
 		maxWorkers = q
@@ -60,24 +57,24 @@ func parseArgs() error {
 
 	flag.StringVar(&wpPath, "path", wpPath, "WordPress installation directory")
 	flag.StringVar(&wpCliPath, "wp-cli", wpCliPath, "Path to WP CLI binary")
-	flag.IntVar(&queueSize, "queue", queueSize, "Maximum job queue size")
+	flag.IntVar(&queueSize, "queue-size", queueSize, "Maximum job queue size")
 	flag.IntVar(&maxWorkers, "workers", maxWorkers, "Maximum number or workers to spawn")
 	flag.Parse()
 
 	if wpCliPath, err = validatePath(wpCliPath); err != nil {
-		return fmt.Errorf("invalid argument \"wp-cli\", %s", err)
+		return fmt.Errorf(`invalid argument "wp-cli", %s`, err)
 	}
 
 	if wpPath, err = validatePath(wpPath); err != nil {
-		return fmt.Errorf("invalid argument \"path\", %s", err)
+		return fmt.Errorf(`invalid argument "path", %s`, err)
 	}
 
 	if queueSize <= 0 {
-		return errors.New("invalid argument \"queue\": must be greater than zero")
+		return errors.New(`invalid argument "queue-size": must be greater than zero`)
 	}
 
 	if maxWorkers <= 0 {
-		return errors.New("invalid argument \"workers\": must be greater than zero")
+		return errors.New(`invalid argument "workers": must be greater than zero`)
 	} else if runtime.NumCPU() == 1 && maxWorkers > 1 {
 
 		// Here we have a problem: WP CLI is a real CPU hog!
