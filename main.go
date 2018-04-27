@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
-	"strings"
 	"sync"
 	"syscall"
 
@@ -29,30 +28,28 @@ func parseArgs() error {
 	var err error
 
 	if value, ok := os.LookupEnv("CRON_RUNNER_WP_PATH"); ok {
-		wpPath = strings.Trim(value, "\"' ")
+		wpPath = value
 	}
 
 	if value, ok := os.LookupEnv("CRON_RUNNER_WP_CLI_PATH"); ok {
-		wpCliPath = strings.Trim(value, "\"' ")
+		wpCliPath = value
 	}
 
 	if value, ok := os.LookupEnv("CRON_RUNNER_QUEUE_SIZE"); ok {
-		value = strings.Trim(value, "\"' ")
 		q, err := strconv.Atoi(value)
 
 		if err != nil {
-			return fmt.Errorf("invalid value provided for \"CRON_RUNNER_QUEUE_SIZE\" variable: %s", err)
+			return fmt.Errorf("invalid value provided for CRON_RUNNER_QUEUE_SIZE environment variable: %s", err)
 		}
 
 		queueSize = q
 	}
 
 	if value, ok := os.LookupEnv("CRON_RUNNER_MAX_WORKERS"); ok {
-		value = strings.Trim(value, "\"' ")
 		q, err := strconv.Atoi(value)
 
 		if err != nil {
-			return fmt.Errorf("invalid value provided for \"CRON_RUNNER_MAX_WORKERS\" variable: %s", err)
+			return fmt.Errorf("invalid value provided for CRON_RUNNER_MAX_WORKERS environment variable: %s", err)
 		}
 
 		maxWorkers = q
