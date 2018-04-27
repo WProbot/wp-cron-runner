@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -63,8 +64,6 @@ func parseArgs() error {
 	flag.IntVar(&maxWorkers, "workers", maxWorkers, "Maximum number or workers to spawn")
 	flag.Parse()
 
-	fmt.Println("p:", wpPath, "cli:", wpCliPath, "q:", queueSize, "w:", maxWorkers)
-
 	if wpCliPath, err = validatePath(wpCliPath); err != nil {
 		return fmt.Errorf("invalid argument \"wp-cli\", %s", err)
 	}
@@ -79,6 +78,10 @@ func parseArgs() error {
 
 	if maxWorkers <= 0 {
 		return errors.New("invalid argument \"workers\": must be greater than zero")
+	} else if runtime.NumCPU() == 1 && maxWorkers > 1 {
+		maxWorkers = 1
+
+		log.Println("Single CPU detected and the number of workers is limited to 1")
 	}
 
 	return nil
