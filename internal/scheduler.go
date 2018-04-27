@@ -23,7 +23,7 @@ func (s *scheduler) Run(ctx context.Context, wg *sync.WaitGroup) {
 		s.requeueSites()
 	}
 
-	requeueTimer := time.NewTicker(1 * time.Second) // small delay between adding jobs to the queue
+	requeueTimer := time.NewTicker(5 * time.Second) // small delay between adding jobs to the queue
 	refreshTimer := time.NewTicker(time.Minute)
 
 	defer func() {
@@ -50,8 +50,6 @@ func (s *scheduler) Run(ctx context.Context, wg *sync.WaitGroup) {
 }
 
 func (s *scheduler) refreshSites() error {
-	rand.Seed(time.Now().UTC().UnixNano())
-
 	urls, err := s.cli.SiteUrls()
 
 	if err != nil {
@@ -60,12 +58,13 @@ func (s *scheduler) refreshSites() error {
 		return err
 	}
 
-	// Shuffle URLs for randomness
+	rand.Seed(time.Now().UTC().UnixNano())
 
-	for i := range urls {
-		j := rand.Intn(i + 1)
+	// Shuffle URLs for randomness and to minimise possible collisions,
+	// when there are multiple instances running
+	rand.Shuffle(len(urls), func(i, j int) {
 		urls[i], urls[j] = urls[j], urls[i]
-	}
+	})
 
 	s.sites = urls
 

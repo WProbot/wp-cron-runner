@@ -15,14 +15,14 @@ type WpCli struct {
 	args  []string
 }
 
-func NewWpCli(wpCliPath, wpPath string) *WpCli {
+func NewWpCli(wpCliPath, wpPath string) WpCli {
 	args := []string{
 		fmt.Sprintf("--path=%s", wpPath),
 		"--quiet",
 		"--allow-root",
 	}
 
-	return &WpCli{
+	return WpCli{
 		wpCliPath,
 		args,
 	}
@@ -41,21 +41,21 @@ func (cli WpCli) Run(subcommands []string) ([]byte, error) {
 }
 
 // Version returns WP CLI version number
-func (cli *WpCli) Version() (string, error) {
+func (cli WpCli) Version() (string, error) {
 	out, err := cli.Run([]string{"cli", "version"})
 
 	return strings.TrimSpace(string(out)), err
 }
 
 // CoreVersion returns WordPress core version number
-func (cli *WpCli) CoreVersion() (string, error) {
+func (cli WpCli) CoreVersion() (string, error) {
 	out, err := cli.Run([]string{"core", "version"})
 
 	return strings.TrimSpace(string(out)), err
 }
 
 // SiteUrls returns a list of URLs of the WordPress sites on multi-site installation
-func (cli *WpCli) SiteUrls() ([]string, error) {
+func (cli WpCli) SiteUrls() ([]string, error) {
 	out, err := cli.Run([]string{
 		"site",
 		"list",
@@ -95,14 +95,14 @@ func (cli *WpCli) SiteUrls() ([]string, error) {
 }
 
 // ScheduleCronEvent schedules the given cron event for immediate run
-func (cli *WpCli) ScheduleCronEvent(event, site string) error {
+func (cli WpCli) ScheduleCronEvent(event, site string) error {
 	_, err := cli.Run([]string{"cron", "event", "schedule", event, "now", fmt.Sprintf("--url=%s", site)})
 
 	return err
 }
 
 // RunCron executes WordPress cron
-func (cli *WpCli) RunCron(site string) error {
+func (cli WpCli) RunCron(site string) error {
 	_, err := cli.Run([]string{"cron", "event", "run", "--due-now", fmt.Sprintf("--url=%s", site)})
 
 	return err

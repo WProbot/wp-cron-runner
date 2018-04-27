@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"sync"
 )
@@ -15,14 +14,14 @@ type worker struct {
 
 func (w *worker) Run(ctx context.Context, wg *sync.WaitGroup) {
 	defer func() {
-		log.Println(fmt.Sprintf("Terminated worker [%d]", w.id))
+		log.Printf("Terminated worker [%d]\n", w.id)
 
 		wg.Done()
 	}()
 
 	wg.Add(1)
 
-	log.Println(fmt.Sprintf("Started worker [%d]", w.id))
+	log.Printf("Started worker [%d]\n", w.id)
 
 	for {
 
@@ -48,15 +47,15 @@ func (w *worker) Run(ctx context.Context, wg *sync.WaitGroup) {
 
 func (w *worker) runCron(site string) {
 	if err := w.cli.ScheduleCronEvent("sqs_capi_sync_background_update", site); err != nil {
-		log.Println(fmt.Sprintf("[FAILED] (worker: %d) Adding CAPI event to site %s, error: %s", w.id, site, err))
+		log.Printf("[FAILED] (worker: %d) Adding CAPI event to site %s, error: %s\n", w.id, site, err)
 	} else {
-		log.Println(fmt.Sprintf("[  OK  ] (worker: %d) Adding CAPI event to site %s", w.id, site))
+		log.Printf("[  OK  ] (worker: %d) Adding CAPI event to site %s\n", w.id, site)
 	}
 
 	if err := w.cli.RunCron(site); err != nil {
-		log.Println(fmt.Sprintf("[FAILED] (worker: %d) Running cron on site %s, error: %s", w.id, site, err))
+		log.Printf("[FAILED] (worker: %d) Running cron on site %s, error: %s\n", w.id, site, err)
 	} else {
-		log.Println(fmt.Sprintf("[  OK  ] (worker: %d) Running cron on site %s", w.id, site))
+		log.Printf("[  OK  ] (worker: %d) Running cron on site %s\n", w.id, site)
 	}
 }
 

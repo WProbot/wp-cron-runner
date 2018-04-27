@@ -26,11 +26,11 @@ func checkArgs() error {
 	var err error
 
 	if wpCliPath, err = checkPath(wpCliPath); err != nil {
-		return errors.New(fmt.Sprintf("invalid argument \"wp-cli\", %s", err))
+		return fmt.Errorf("invalid argument \"wp-cli\", %s", err)
 	}
 
 	if wpPath, err = checkPath(wpPath); err != nil {
-		return errors.New(fmt.Sprintf("invalid argument \"path\", %s", err))
+		return fmt.Errorf("invalid argument \"path\", %s", err)
 	}
 
 	if queueSize <= 0 {
@@ -56,7 +56,7 @@ func checkPath(path string) (string, error) {
 	}
 
 	if _, err = os.Stat(path); os.IsNotExist(err) {
-		return "", errors.New(fmt.Sprintf("%s: no such file or directory", path))
+		return "", fmt.Errorf("%s: no such file or directory", path)
 	}
 
 	return path, nil
@@ -112,10 +112,10 @@ func main() {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	queue := make(chan string, queueSize)
 
-	internal.SpawnScheduler(ctx, wg, cli, queue)
+	internal.SpawnScheduler(ctx, wg, &cli, queue)
 
 	for i := 0; i < maxWorkers; i++ {
-		internal.SpawnWorker(i+1, ctx, wg, cli, queue)
+		internal.SpawnWorker(i+1, ctx, wg, &cli, queue)
 	}
 
 	<-exit // block until exit signal
