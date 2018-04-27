@@ -9,6 +9,8 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -22,14 +24,52 @@ var (
 	queueSize  = 100
 )
 
-func checkArgs() error {
+func parseArgs() error {
 	var err error
 
-	if wpCliPath, err = checkPath(wpCliPath); err != nil {
+	if value, ok := os.LookupEnv("CRON_RUNNER_WP_PATH"); ok {
+		wpPath = strings.Trim(value, "\"' ")
+	}
+
+	if value, ok := os.LookupEnv("CRON_RUNNER_WP_CLI_PATH"); ok {
+		wpCliPath = strings.Trim(value, "\"' ")
+	}
+
+	if value, ok := os.LookupEnv("CRON_RUNNER_QUEUE_SIZE"); ok {
+		value = strings.Trim(value, "\"' ")
+		q, err := strconv.Atoi(value)
+
+		if err != nil {
+			return fmt.Errorf("invalid value provided for \"CRON_RUNNER_QUEUE_SIZE\" variable: %s", err)
+		}
+
+		queueSize = q
+	}
+
+	if value, ok := os.LookupEnv("CRON_RUNNER_MAX_WORKERS"); ok {
+		value = strings.Trim(value, "\"' ")
+		q, err := strconv.Atoi(value)
+
+		if err != nil {
+			return fmt.Errorf("invalid value provided for \"CRON_RUNNER_MAX_WORKERS\" variable: %s", err)
+		}
+
+		maxWorkers = q
+	}
+
+	flag.StringVar(&wpPath, "path", wpPath, "WordPress installation directory")
+	flag.StringVar(&wpCliPath, "wp-cli", wpCliPath, "Path to WP CLI binary")
+	flag.IntVar(&queueSize, "queue", queueSize, "Maximum job queue size")
+	flag.IntVar(&maxWorkers, "workers", maxWorkers, "Maximum number or workers to spawn")
+	flag.Parse()
+
+	fmt.Println("p:", wpPath, "cli:", wpCliPath, "q:", queueSize, "w:", maxWorkers)
+
+	if wpCliPath, err = validatePath(wpCliPath); err != nil {
 		return fmt.Errorf("invalid argument \"wp-cli\", %s", err)
 	}
 
-	if wpPath, err = checkPath(wpPath); err != nil {
+	if wpPath, err = validatePath(wpPath); err != nil {
 		return fmt.Errorf("invalid argument \"path\", %s", err)
 	}
 
@@ -44,7 +84,7 @@ func checkArgs() error {
 	return nil
 }
 
-func checkPath(path string) (string, error) {
+func validatePath(path string) (string, error) {
 	if path == "" {
 		return "", errors.New("required and must not be empty")
 	}
@@ -62,20 +102,12 @@ func checkPath(path string) (string, error) {
 	return path, nil
 }
 
-func init() {
-	flag.StringVar(&wpPath, "path", wpPath, "WordPress installation directory")
-	flag.StringVar(&wpCliPath, "wp-cli", wpCliPath, "Path to WP CLI binary")
-	flag.IntVar(&queueSize, "queue", queueSize, "Maximum job queue size")
-	flag.IntVar(&maxWorkers, "workers", maxWorkers, "Maximum number or workers to spawn")
-	flag.Parse()
-}
-
 func main() {
 	log.SetOutput(os.Stdout)
 
 	// Check arguments
 
-	if err := checkArgs(); err != nil {
+	if err := parseArgs(); err != nil {
 		log.Fatalln("Error:", err)
 	}
 
