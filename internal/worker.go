@@ -46,12 +46,6 @@ func (w *worker) Run(ctx context.Context, wg *sync.WaitGroup) {
 }
 
 func (w *worker) runCron(site string) {
-	if err := w.cli.ScheduleCronEvent("sqs_capi_sync_background_update", site); err != nil {
-		log.Printf("[FAILED] (worker: %d) Adding CAPI event to site %s, error: %s\n", w.id, site, err)
-	} else {
-		log.Printf("[  OK  ] (worker: %d) Adding CAPI event to site %s\n", w.id, site)
-	}
-
 	if err := w.cli.RunCron(site); err != nil {
 		log.Printf("[FAILED] (worker: %d) Running cron on site %s, error: %s\n", w.id, site, err)
 	} else {
